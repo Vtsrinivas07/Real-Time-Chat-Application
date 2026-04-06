@@ -14,17 +14,11 @@ export const initSocket = () => {
       reconnectionDelayMax: 5000,
     });
 
-    socket.on('connect', () => {
-      console.log('Socket connected:', socket.id);
-    });
+    socket.on('connect', () => {});
 
-    socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
-    });
+    socket.on('disconnect', () => {});
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-    });
+    socket.on('connect_error', () => {});
   }
   return socket;
 };

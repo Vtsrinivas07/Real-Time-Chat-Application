@@ -89,7 +89,7 @@ const MessageItem = ({ message, userId, userName, onDeleteForMe, onPinToggle }) 
 
   return (
     <div className={`message ${isOwnMessage ? 'me' : 'other'} ${message.isPinned ? 'pinned' : ''} ${isDeleted ? 'deleted' : ''}`}>
-      <div className={`message-bubble ${isDeleted ? 'message-deleted' : ''}`}>
+      <div className={`message-bubble ${isDeleted ? 'message-deleted' : ''}`} ref={menuRef}>
         <div className="message-header">
           <span className="message-sender">{isOwnMessage ? 'You' : senderName}</span>
           <span className="message-time">{formatTime(message.createdAt || message.timestamp)}</span>
@@ -102,7 +102,7 @@ const MessageItem = ({ message, userId, userName, onDeleteForMe, onPinToggle }) 
         </div>
 
         {!isDeleted && (
-          <div style={{ position: 'relative' }} ref={menuRef}>
+          <>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -112,7 +112,7 @@ const MessageItem = ({ message, userId, userName, onDeleteForMe, onPinToggle }) 
               className="message-menu-btn"
               title="Message options"
             >
-              ...
+              ⋮
             </button>
 
             {showMenu && (
@@ -152,7 +152,7 @@ const MessageItem = ({ message, userId, userName, onDeleteForMe, onPinToggle }) 
                 )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>

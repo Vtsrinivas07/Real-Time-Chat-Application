@@ -6,7 +6,7 @@ import './App.css';
 function App() {
   const [userName, setUserName] = useState(() => localStorage.getItem('userName') || '');
   const [inputName, setInputName] = useState(userName);
-  const [userId, setUserId] = useState('');
+  const [userId, setUserId] = useState(() => localStorage.getItem('chatUserId') || '');
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState(0);
   const [appError, setAppError] = useState(null);
@@ -16,13 +16,18 @@ function App() {
     const socket = initSocket();
 
     socket.on('connect', () => {
-      console.log('Connected to server');
       setIsConnected(true);
       setAppError(null);
+      
+      const restoredUserName = localStorage.getItem('userName');
+      const restoredUserId = localStorage.getItem('chatUserId');
+      
+      if (restoredUserName && restoredUserId) {
+        socket.emit('user:join', { id: restoredUserId, name: restoredUserName });
+      }
     });
 
     socket.on('disconnect', () => {
-      console.log('Disconnected from server');
       setIsConnected(false);
     });
 
@@ -49,6 +54,7 @@ function App() {
 
   const handleEnterName = async () => {
     const trimmedName = inputName.trim();
+    
     if (!trimmedName) {
       alert('Please enter a name');
       return;
@@ -90,8 +96,8 @@ function App() {
 
       socket.emit('user:join', { id: uniqueId, name: finalName });
     } catch (error) {
-      console.error('Error joining:', error);
-      setAppError('Failed to join chat');
+      alert('Error joining chat: ' + error.message);
+      setAppError('Failed to join chat: ' + error.message);
     }
   };
 

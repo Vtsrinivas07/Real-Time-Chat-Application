@@ -258,9 +258,12 @@ body {
 
 .message-bubble {
   position: relative;
-  padding: 10px 34px 10px 10px;
+  padding: 10px 40px 10px 10px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .message.me {
@@ -329,41 +332,44 @@ body {
 
 .message-menu-btn {
   position: absolute;
-  top: 4px;
-  right: 6px;
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   border: none;
-  background: transparent;
+  background: #e5e7eb;
   cursor: pointer;
   font-size: 16px;
   line-height: 1;
-  letter-spacing: 1px;
-  font-weight: 700;
+  letter-spacing: 0;
+  font-weight: 400;
   font-family: Arial, sans-serif;
-  color: #6b7280;
-  border-radius: 4px;
+  color: #4b5563;
+  border-radius: 6px;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .message-menu-btn:hover,
 .message-menu-btn:focus {
-  background: #e5e7eb;
+  background: #d1d5db;
+  color: #111827;
   outline: none;
 }
 
 .message-menu {
   position: absolute;
-  top: 26px;
-  right: 0;
+  top: 36px;
+  right: 8px;
   min-width: 160px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .menu-item {
