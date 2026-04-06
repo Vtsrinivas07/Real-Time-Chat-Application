@@ -29,20 +29,45 @@ const io = new Server(server, {
 // Make io accessible to routes
 app.set('io', io);
 
-// Socket.io connection handling
-const users = new Map();
+// Track active users
+const activeUsers = new Map(); // userId -> { id, name, socketId }
+const userSockets = new Map(); // socketId -> userId
 
 io.on('connection', (socket) => {
-  const userId = socket.handshake.query?.userId || socket.id;
-  users.set(socket.id, userId);
-  
-  io.emit('onlineUsers', users.size);
-  console.log(`User connected. Total online: ${users.size}`);
+  const socketId = socket.id;
+  console.log(`User connected: ${socketId}`);
 
+  // Emit current list of active users
+  io.emit('activeUsers', Array.from(activeUsers.values()));
+
+  // Update online count
+  io.emit('onlineUsers', activeUsers.size);
+
+  // Handle user join
+  socket.on('user:join', (data) => {
+    const { id, name } = data;
+    activeUsers.set(id, { id, name, socketId });
+    userSockets.set(socketId, id);
+
+    console.log(`User joined: ${name} (${id})`);
+
+    // Broadcast to all clients
+    io.emit('user:joined', { id, name });
+    io.emit('activeUsers', Array.from(activeUsers.values()));
+    io.emit('onlineUsers', activeUsers.size);
+  });
+
+  // Handle disconnect
   socket.on('disconnect', () => {
-    users.delete(socket.id);
-    io.emit('onlineUsers', users.size);
-    console.log(`User disconnected. Total online: ${users.size}`);
+    const userId = userSockets.get(socketId);
+    if (userId) {
+      activeUsers.delete(userId);
+      userSockets.delete(socketId);
+      io.emit('user:left', userId);
+      io.emit('activeUsers', Array.from(activeUsers.values()));
+      io.emit('onlineUsers', activeUsers.size);
+      console.log(`User left: ${userId}`);
+    }
   });
 });
 

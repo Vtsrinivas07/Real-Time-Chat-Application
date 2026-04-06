@@ -1,34 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { deleteMessageForMe, deleteMessageForEveryone, togglePinMessage } from '../services/api';
 
-const MessageItem = ({ message, userId, onDeleteForMe, onPinToggle }) => {
-  const [showActions, setShowActions] = useState(false);
+const MessageItem = ({ message, userId, userName, onDeleteForMe, onPinToggle }) => {
+  const [showMenu, setShowMenu] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const menuRef = useRef(null);
 
-  const getColorFromId = (id) => {
-    const colors = [
-      '#fecaca', // red-200
-      '#fed7aa', // orange-200
-      '#fde68a', // yellow-200
-      '#d9f99d', // lime-200
-      '#bbf7d0', // green-200
-      '#a7f3d0', // emerald-200
-      '#99f6e4', // teal-200
-      '#a5f3fc', // cyan-200
-      '#bfdbfe', // blue-200
-      '#c7d2fe', // indigo-200
-      '#ddd6fe', // violet-200
-      '#f0abfc', // fuchsia-200
-      '#fbcfe8', // pink-200
-    ];
-    
-    let hash = 0;
-    for (let i = 0; i < id.length; i++) {
-      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-    
-    return colors[Math.abs(hash) % colors.length];
-  };
+  }, [showMenu]);
 
   const handleDeleteForMe = async () => {
     if (isDeleting) return;
@@ -46,14 +36,14 @@ const MessageItem = ({ message, userId, onDeleteForMe, onPinToggle }) => {
 
   const handleDeleteForEveryone = async () => {
     if (isDeleting) return;
-    
+
     if (message.senderId !== userId) {
       alert('You can only delete your own messages for everyone');
       return;
     }
-    
+
     if (!window.confirm('Delete this message for everyone?')) return;
-    
+
     try {
       setIsDeleting(true);
       await deleteMessageForEveryone(message._id, userId);
@@ -77,82 +67,90 @@ const MessageItem = ({ message, userId, onDeleteForMe, onPinToggle }) => {
 
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
+
+    if (Number.isNaN(date.getTime())) {
+      return '--:--';
+    }
+
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
     });
   };
 
+  // Extract sender name from senderId (format: "name-xxxx")
+  const senderName =
+    message.senderName ||
+    message.senderId?.split('-').slice(0, -1).join('-') ||
+    'Unknown';
+
   const isDeleted = message.deletedForEveryone;
   const isOwnMessage = message.senderId === userId;
-  const userColor = !isOwnMessage && !message.isPinned ? getColorFromId(message.senderId) : null;
 
   return (
-    <div
-      className={`relative p-3 rounded-lg transition-all ${
-        message.isPinned
-          ? 'bg-yellow-50 border-l-4 border-yellow-400'
-          : isOwnMessage
-          ? 'bg-blue-50 border-l-4 border-blue-400'
-          : 'bg-white'
-      } ${isDeleted ? 'opacity-60' : ''} hover:shadow-md`}
-      style={userColor && !isDeleted ? { backgroundColor: userColor } : {}}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            {!isOwnMessage && (
-              <span className="text-xs font-semibold text-gray-700">
-                {message.senderId}
-              </span>
-            )}
-            <span className="text-xs text-gray-500">
-              {formatTime(message.timestamp)}
-            </span>
-            {isOwnMessage && (
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                You
-              </span>
-            )}
-            {message.isPinned && (
-              <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full">
-                📌 Pinned
-              </span>
-            )}
-          </div>
-          <p className={`text-gray-800 break-words ${isDeleted ? 'italic text-gray-500' : ''}`}>
-            {message.content}
-          </p>
+    <div className={`message ${isOwnMessage ? 'me' : 'other'} ${message.isPinned ? 'pinned' : ''} ${isDeleted ? 'deleted' : ''}`}>
+      <div className={`message-bubble ${isDeleted ? 'message-deleted' : ''}`}>
+        <div className="message-header">
+          <span className="message-sender">{isOwnMessage ? 'You' : senderName}</span>
+          <span className="message-time">{formatTime(message.createdAt || message.timestamp)}</span>
+          {message.isPinned && (
+            <span className="message-badge pinned">Pinned</span>
+          )}
+        </div>
+        <div className={`message-text ${isDeleted ? 'deleted' : ''}`}>
+          {isDeleted ? 'Message deleted' : message.content}
         </div>
 
-        {showActions && !isDeleted && (
-          <div className="flex gap-1 ml-2">
+        {!isDeleted && (
+          <div style={{ position: 'relative' }} ref={menuRef}>
             <button
-              onClick={handleTogglePin}
-              className="p-1 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 rounded transition-colors"
-              title={message.isPinned ? 'Unpin' : 'Pin message'}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              type="button"
+              className="message-menu-btn"
+              title="Message options"
             >
-              📌
+              ...
             </button>
-            <button
-              onClick={handleDeleteForMe}
-              disabled={isDeleting}
-              className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
-              title="Delete for me"
-            >
-              🗑️
-            </button>
-            {message.senderId === userId && (
-              <button
-                onClick={handleDeleteForEveryone}
-                disabled={isDeleting}
-                className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
-                title="Delete for everyone"
-              >
-                ❌
-              </button>
+
+            {showMenu && (
+              <div className="message-menu">
+                <button
+                  onClick={() => {
+                    handleTogglePin();
+                    setShowMenu(false);
+                  }}
+                  className="menu-item"
+                >
+                  {message.isPinned ? 'Unpin' : 'Pin'}
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleDeleteForMe();
+                    setShowMenu(false);
+                  }}
+                  disabled={isDeleting}
+                  className="menu-item"
+                >
+                  Delete for me
+                </button>
+
+                {message.senderId === userId && (
+                  <button
+                    onClick={() => {
+                      handleDeleteForEveryone();
+                      setShowMenu(false);
+                    }}
+                    disabled={isDeleting}
+                    className="menu-item danger"
+                  >
+                    Delete for everyone
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}

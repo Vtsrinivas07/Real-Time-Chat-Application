@@ -11,6 +11,19 @@ export const initSocket = () => {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
+      reconnectionDelayMax: 5000,
+    });
+
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
     });
   }
   return socket;

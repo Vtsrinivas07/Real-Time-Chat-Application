@@ -60,10 +60,6 @@ const ChatWindow = ({ userId }) => {
     }
   };
 
-  const handleSendMessage = (newMessage) => {
-    // Message will be added via socket event
-  };
-
   const handleDeleteForMe = (messageId) => {
     setMessages((prev) =>
       prev.map((msg) =>
@@ -74,13 +70,11 @@ const ChatWindow = ({ userId }) => {
     );
   };
 
-  const handlePinToggle = (messageId) => {
-    // Update will come via socket event
-  };
+  const handlePinToggle = () => {};
 
   const visibleMessages = messages.filter(
     (msg) => !msg.deletedBy || !msg.deletedBy.includes(userId)
-  );
+  ).filter(msg => msg && msg._id);
 
   const pinnedMessages = [...new Map(
     visibleMessages
@@ -90,38 +84,44 @@ const ChatWindow = ({ userId }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-gray-500">Loading messages...</div>
+      <div className="chat-container">
+        <div className="placeholder-container">
+          Loading messages...
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-96">
-        <div className="text-red-500 mb-4">{error}</div>
-        <button
-          onClick={loadMessages}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Retry
-        </button>
+      <div className="chat-container">
+        <div className="placeholder-container">
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ color: '#ef4444', marginBottom: '15px' }}>{error}</p>
+            <button
+              onClick={loadMessages}
+              style={{ padding: '8px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden">
+    <div className="chat-container">
       <PinnedMessages messages={pinnedMessages} userId={userId} />
-      
+
       <MessageList
         messages={visibleMessages}
         userId={userId}
         onDeleteForMe={handleDeleteForMe}
         onPinToggle={handlePinToggle}
       />
-      
-      <MessageInput onSendMessage={handleSendMessage} userId={userId} />
+
+      <MessageInput onSendMessage={() => {}} userId={userId} />
     </div>
   );
 };

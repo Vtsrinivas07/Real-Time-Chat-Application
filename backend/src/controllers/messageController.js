@@ -39,7 +39,7 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
-    if (!senderId) {
+    if (!senderId || senderId.trim().length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Sender ID is required'
@@ -55,7 +55,7 @@ exports.sendMessage = async (req, res) => {
 
     const message = new Message({
       content: content.trim(),
-      senderId
+      senderId: senderId.trim()
     });
 
     await message.save();
